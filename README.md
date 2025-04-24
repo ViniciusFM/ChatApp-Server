@@ -15,7 +15,8 @@ irá criá-lo
 
 | Atributo     | Tipo  | Descrição                     |
 |--------------|-------|-------------------------------|
-| id           | int64 | Número identificador do canal |
+| id           | int64 | ID na base de dados           |
+| uuid         |  str  | Identificador do canal        |
 | alias        |  str  | Nome do canal                 |
 | pic_res      |  str  | UUID da imagem do canal       |
 | admin_id     | int64 | ID do administrador do canal  |

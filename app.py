@@ -5,7 +5,10 @@ from flask import (
     abort
 )
 from functools import wraps
-from model import Message, init_db
+from model import (
+    Channel, Message, init_db,
+    APIModelException
+)
 
 WD          = os.path.dirname(os.path.abspath(__file__))
 CONFIGFILE  = os.path.join(WD, 'config.json')
@@ -39,13 +42,37 @@ def auth_required(f):
 def index():
     return render_template('index.html')
 
+@app.route('/channels/<string:uuid>', methods=['GET'])
+@auth_required
+def get_channel(uuid):
+    chn = Channel.query.filter_by(uuid=uuid).first()
+    if chn:
+        return jsonify(chn.toDict())
+    abort(404)
+
+@app.route('/channels/new', methods=['POST'])
+@auth_required
+def new_channel():
+    chndict = request.get_json()
+    if (not 'alias' in chndict):
+        abort(400)
+    chn = Channel.new(chndict['alias'])
+    return jsonify(chn.toDict())
+
 @app.route('/messages/new', methods=['POST'])
 @auth_required
 def new_message():
     msgdict = request.get_json()
-    if (not 'text' in msgdict):
+    if (not 'text' in msgdict) and\
+       (not 'channel_uuid' in msgdict):
         abort(400)
-    msg = Message.new(msgdict['text'])
+    try:
+        msg = Message.new(msgdict['channel_uuid'], 
+                          msgdict['text'])
+    except APIModelException as e:
+        return jsonify({
+            'errmsg': e.message
+        }), 400
     return jsonify(msg.toDict())
 
 @app.route('/messages', methods=['GET'])
