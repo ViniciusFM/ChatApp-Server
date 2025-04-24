@@ -1,35 +1,57 @@
-from flask import Flask, render_template, jsonify
+import json
+import os
+from flask import (
+    Flask, render_template, jsonify, request,
+    abort
+)
+from functools import wraps
+from model import Message, init_db
 
-app = Flask(__name__)
+WD          = os.path.dirname(os.path.abspath(__file__))
+CONFIGFILE  = os.path.join(WD, 'config.json')
+
+# --- app
+
+def create_app():
+    _app = Flask(__name__)
+    with _app.app_context():
+        with open(CONFIGFILE, 'r', encoding='utf-8') as cfgfile:
+            cfgdict = json.load(cfgfile)
+            _app.config.update(cfgdict)
+        init_db(_app)
+    return _app
+app = create_app()
+
+# --- utils
+
+def auth_required(f):
+    @wraps(f)
+    def inject(*args, **kwargs):
+        token = request.headers.get('Token-Auth')
+        if token != app.config['SECRET_KEY']:
+            abort(400)
+        return f(*args, **kwargs)
+    return inject
+
+# --- routes
 
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
 
+@app.route('/messages/new', methods=['POST'])
+@auth_required
+def new_message():
+    msgdict = request.get_json()
+    if (not 'text' in msgdict):
+        abort(400)
+    msg = Message.new(msgdict['text'])
+    return jsonify(msg.toDict())
+
 @app.route('/messages', methods=['GET'])
+@auth_required
 def get_messages():
-    # JSONArray
-    messages = [ # dictionary list
-        {
-            'id': 1,
-            'channel_id': 1,
-            'user_id': 1,
-            'text': 'hello, world!',
-            'creation_ts': '2025-04-10 22:04:34'
-        },
-        {
-            'id': 2,
-            'channel_id': 1,
-            'user_id': 1,
-            'text': 'how you doin?',
-            'creation_ts': '2025-04-10 22:04:34'
-        },
-        {
-            'id': 3,
-            'channel_id': 1,
-            'user_id': 1,
-            'text': 'hi',
-            'creation_ts': '2025-04-10 22:04:34'
-        }
-    ]
-    return jsonify(messages) # Formato JSONObject ou JSONArray
+    ret = []
+    for msg in Message.query.all():
+        ret.append(msg.toDict())
+    return jsonify(ret)

@@ -61,7 +61,16 @@ deactivate
 pip install -r requirements.txt
 ```
 > OBS: caso você adicione mais uma biblioteca no projeto, recomenda-se executar: pip freeze > requirements.txt
-6) Executar a aplicação flask localmente:
+6) Crie um arquivo `config.json` à exemplo do arquivo `config-example.json`.
+    * Para criar um valor para o parâmetro `secret` de `config.json` execute:
+    ```python
+    python -c "import secrets; print(secrets.token_hex(32))"
+    ```
+    * Copie o valor gerado no arquivo de configuração.
+7) Executar a aplicação flask localmente:
 ```bash
 flask run --debug --host=0.0.0.0 --port=5000
 ```
+8) Utilize uma aplicação para testar a API. Sugestões:
+    * [Insomnia](https://insomnia.rest/download)
+    * [Postman](https://www.postman.com/)

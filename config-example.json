@@ -1,0 +1,4 @@
+{
+    "SQLALCHEMY_DATABASE_URI": "sqlite:///chat.db",
+    "SECRET_KEY": "d58df521bc5646d591368f287f3b0d492e4b8cf2a2cb347258ba576465d0dc78"
+}
