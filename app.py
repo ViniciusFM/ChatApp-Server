@@ -1,13 +1,20 @@
+import datetime
+import fnmatch
 import json
+import jwt
 import os
+
 from flask import (
     Flask, render_template, jsonify, request,
     abort
 )
 from functools import wraps
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from google.auth.exceptions import GoogleAuthError
 from model import (
     Channel, Message, init_db,
-    APIModelException
+    User, APIModelException
 )
 
 WD          = os.path.dirname(os.path.abspath(__file__))
@@ -30,21 +37,81 @@ app = create_app()
 def auth_required(f):
     @wraps(f)
     def inject(*args, **kwargs):
-        token = request.headers.get('Token-Auth')
-        if token != app.config['SECRET_KEY']:
+        data = request.get_json()
+        if 'token' not in data:
             abort(400)
-        return f(*args, **kwargs)
+        try:
+            api_token = jwt.decode(data['token'], 
+                                   app.config['SECRET_KEY'], 
+                                   algorithms=['HS256'])
+            print(api_token)
+            return f(user=User.get_user(api_token['email']), *args, **kwargs)
+        except APIModelException as e:
+            return jsonify({
+                'errmsg': e.message
+            }), 404
+        except (jwt.exceptions.ExpiredSignatureError,
+                jwt.exceptions.InvalidTokenError):
+            return jsonify({
+                'errmsg': 'Invalid or expired token.'
+            }), 403
     return inject
 
-# --- routes
+def email_allowed(email:str):
+    if 'RESTRICT_TO' not in app.config or\
+        not app.config['RESTRICT_TO'] or\
+        type(app.config['RESTRICT_TO']) != list:
+            return True
+    for rule in app.config['RESTRICT_TO']:
+        if fnmatch.fnmatch(email, rule):
+            return True
+    return False
+
+# --- routes.pages
 
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
 
+@app.route('/invite/<string:uuid>', methods=['GET'])
+def channel_invitation(uuid):
+    return render_template('invite.html', uuid=uuid)
+
+# --- routes.auth
+
+@app.route('/auth/google', methods=['POST'])
+def google_login():
+    data = request.get_json()
+    if 'id_token' not in data:
+        abort(400)
+    try:
+        idinfo = id_token.verify_oauth2_token(data['id_token'], 
+                                            requests.Request(),
+                                            app.config['GOOGLE_CLIENT_ID'])
+        email = idinfo['email']
+        if not email_allowed(email):
+            return jsonify({
+                'errmsg': 'Google account not allowed.'
+            }), 403
+        usr = User.get_user_or_none(email)
+        if not usr:
+            name = idinfo['name']
+            usr = User.new(name, email)
+        api_token = jwt.encode({
+            'email': usr.email,
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+        return jsonify({'user': usr.toDict(sensitive=True), 'token': api_token})
+    except GoogleAuthError as e:
+        return jsonify({
+            'errmsg': f'Google account connection failure. [Err={str(e)}]'
+        }), 403
+
+# --- routes.api
+
 @app.route('/channels/<string:uuid>', methods=['GET'])
 @auth_required
-def get_channel(uuid):
+def get_channel(user:User, uuid:str):
     chn = Channel.query.filter_by(uuid=uuid).first()
     if chn:
         return jsonify(chn.toDict())
@@ -52,33 +119,26 @@ def get_channel(uuid):
 
 @app.route('/channels/new', methods=['POST'])
 @auth_required
-def new_channel():
+def new_channel(user:User):
     chndict = request.get_json()
     if (not 'alias' in chndict):
         abort(400)
-    chn = Channel.new(chndict['alias'])
+    chn = Channel.new(chndict['alias'], user.uuid)
     return jsonify(chn.toDict())
 
 @app.route('/messages/new', methods=['POST'])
 @auth_required
-def new_message():
+def new_message(user:User):
     msgdict = request.get_json()
     if (not 'text' in msgdict) and\
        (not 'channel_uuid' in msgdict):
         abort(400)
     try:
         msg = Message.new(msgdict['channel_uuid'], 
-                          msgdict['text'])
+                          msgdict['text'],
+                          user.uuid)
     except APIModelException as e:
         return jsonify({
             'errmsg': e.message
         }), 400
     return jsonify(msg.toDict())
-
-@app.route('/messages', methods=['GET'])
-@auth_required
-def get_messages():
-    ret = []
-    for msg in Message.query.all():
-        ret.append(msg.toDict())
-    return jsonify(ret)

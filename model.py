@@ -9,23 +9,65 @@ def init_db(app):
     db.init_app(app)
     db.create_all()
 
+def get_uuid() -> str:
+    return uuid.uuid4().hex
+
 class APIModelException(Exception):
     def __init__(self, msg='API Model Exception'):
         super().__init__(msg)
 
+class User(db.Model):
+    __tablename__ = 'users'
+    id          = db.Column(db.Integer, primary_key=True)
+    uuid        = db.Column(db.String(32), default=get_uuid, unique=True)
+    name        = db.Column(db.String(256))
+    email       = db.Column(db.String(256), unique=True)
+    channels    = db.relationship('Channel', lazy=True)
+    @staticmethod
+    def new(name:str, email:str) -> 'User':
+        usr = User()
+        usr.name = name
+        usr.email = email
+        db.session.add(usr)
+        db.session.commit()
+        return usr
+    @staticmethod
+    def get_user(email:str) -> 'User':
+        usr = User.query.filter_by(email=email).first()
+        if not usr:
+            raise APIModelException('User doesn\'t exist.')
+        return usr
+    @staticmethod
+    def get_user_or_none(email:str) -> 'User|None':
+        return User.query.filter_by(email=email).first()
+    def toDict(self, sensitive=False):
+        ret = {
+            'id'        : self.id,
+            'name'      : self.name,
+        }
+        if sensitive:
+            ret['uuid']     = self.uuid
+            ret['email']    = self.email
+            ret['channels'] = [chn.toDict() for chn in self.channels]
+        return ret
+
 class Channel(db.Model):
     __tablename__ = 'channels'
     id          = db.Column(db.Integer, primary_key=True)
-    uuid        = db.Column(db.String(32), default=uuid.uuid4().hex)
+    uuid        = db.Column(db.String(32), default=get_uuid, unique=True)
     alias       = db.Column(db.String(128), nullable=False)
-    pic_res     = db.Column(db.String(32))
-    admin_id    = db.Column(db.Integer, nullable=False)
+    pic_res     = db.Column(db.String(32), unique=True)
+    admin_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     messages    = db.relationship('Message', backref='channel', lazy=True)
+    admin       = db.relationship('User', lazy=True, viewonly=True)
     @staticmethod
-    def new(alias:str) -> 'Channel':
+    def new(alias:str, admin_uuid:str) -> 'Channel':
+        adm = User.query.filter_by(uuid=admin_uuid).first()
+        if not adm:
+            raise APIModelException('Admin user doesn\'t exist.')
         chn = Channel()
         chn.alias = alias
-        chn.admin_id = 1
+        chn.admin_id = adm.id
         db.session.add(chn)
         db.session.commit()
         return chn
@@ -35,7 +77,6 @@ class Channel(db.Model):
             'uuid'      : self.uuid,
             'alias'     : self.alias,
             'pic_res'   : self.pic_res,
-            'admin_id'  : self.admin_id,
             'messages'  : [msg.toDict() for msg in self.messages]
         }
 
@@ -43,17 +84,21 @@ class Message(db.Model):
     __tablename__ = 'messages'
     id          = db.Column(db.Integer, primary_key=True)
     channel_id  = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-    user_id     = db.Column(db.Integer, nullable=False)
+    user_id     = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text        = db.Column(db.String(2048), nullable=False)
-    creation_ts = db.Column(db.DateTime, default=func.now())    
+    creation_ts = db.Column(db.DateTime, default=func.now())
+    user        = db.relationship('User', lazy=True)
     @staticmethod
-    def new(channel_uuid:str, text:str) -> 'Message':
+    def new(channel_uuid:str, text:str, user_uuid:str) -> 'Message':
         chn = Channel.query.filter_by(uuid=channel_uuid).first()
         if not chn:
             raise APIModelException('Channel doesn\'t exist.')
+        usr = User.query.filter_by(uuid=user_uuid).first()
+        if not usr:
+            raise APIModelException('User doesn\'t exist.')
         msg = Message()
         msg.channel_id = chn.id
-        msg.user_id = 1
+        msg.user_id = usr.id
         msg.text = text
         db.session.add(msg)
         db.session.commit()
@@ -62,7 +107,7 @@ class Message(db.Model):
         return {
             'id'         : self.id,
             'channel_id' : self.channel_id,
-            'user_id'    : self.user_id,
             'text'       : self.text,
-            'creation_ts': self.creation_ts
+            'creation_ts': self.creation_ts,
+            'user'       : self.user.toDict()
         }
