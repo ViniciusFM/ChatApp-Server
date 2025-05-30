@@ -32,12 +32,6 @@ class User(db.Model):
         db.session.commit()
         return usr
     @staticmethod
-    def get_user(email:str) -> 'User':
-        usr = User.query.filter_by(email=email).first()
-        if not usr:
-            raise APIModelException('User doesn\'t exist.')
-        return usr
-    @staticmethod
     def get_user_or_none(email:str) -> 'User|None':
         return User.query.filter_by(email=email).first()
     @staticmethod

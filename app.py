@@ -44,10 +44,10 @@ def auth_required(f):
             api_token = jwt.decode(data['token'], 
                                    app.config['SECRET_KEY'], 
                                    algorithms=['HS256'])
-            return f(user=User.get_user(api_token['email']), *args, **kwargs)
+            return f(user=User.fetch(api_token['uuid']), *args, **kwargs)
         except APIModelException as e:
             return jsonify({
-                'errmsg': e.message
+                'errmsg': str(e)
             }), 404
         except (jwt.exceptions.ExpiredSignatureError,
                 jwt.exceptions.InvalidTokenError):
@@ -97,7 +97,7 @@ def google_login():
             name = idinfo['name']
             usr = User.new(name, email)
         api_token = jwt.encode({
-            'email': usr.email,
+            'uuid': usr.uuid,
             'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
         }, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'user': usr.toDict(sensitive=True), 'token': api_token})
@@ -139,6 +139,6 @@ def new_message(user:User):
                           user)
     except APIModelException as e:
         return jsonify({
-            'errmsg': e.message
+            'errmsg': str(e)
         }), 400
     return jsonify(msg.toDict())
