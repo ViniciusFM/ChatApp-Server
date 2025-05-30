@@ -41,3 +41,18 @@ O [Google Cloud Console](https://console.cloud.google.com/) é uma plataforma we
 17. O *body* da resposta do servidor irá conter um JSON. Nele, copie o valor da chave `"id_token"`. Este é o `token` que você irá utilizar para testar a rota `auth/google` do *ChatApp Server*. A rota `auth/google` é a responsável por gerar o JWT usado nos *endpoints* que requerem token de autenticação no serviço do *ChatApp Server*.
 
 ### Configurando para usar no *mobile app*
+
+8. Escolha o tipo de aplicativo como `Android` e dê um nome claro para que você reconheça posteriormente. (e.g. `chatapp-android-debug`)
+9. Você precisará informar o nome do pacote do seu aplicativo e a assinatura SHA-1.
+    * Copie o nome do pacote do app: e.g. `br.edu.iftm.chatapp`
+    * Para gerar a assinatura do seu aplicativo, se ele ainda não está na loja execute o seguinte comando no terminal:
+        * **OBS**: o `debug.keystore` geralmente está localizado na pasta `~/.android/debug.keystore` no Linux e este código só serve para apps em modo *debugging*. Veja mais detalhes sobre isso clicando [aqui](https://support.google.com/cloud/answer/6158849#installedapplications&android)
+        * **A senha pedida pelo keytool é `android`**, para este caso
+    ```bash
+    keytool -list -v -keystore ~/.android/debug.keystore
+    ```
+    * Copie o conjunto de octetos, que vem logo após `SHA1` na resposta do programa *keytool*, e cole no campo do site. Finalize a criação do cliente.
+12. Siga os 8 a 13 da [seção anterior](#configurando-uma-forma-para-testar-com-um-api-tester) e copie o `Cliente ID` gerado nesta etapa, você irá precisar dele para a implementação da comunicação do app com o backend do *ChatApp Server*.
+11. Na página de [Branding](https://console.developers.google.com/auth/branding), certifique-se de que você inseriu corretamente as informações do aplicativo.
+    * Certifique-se de que seu App está com o nome, a logo e a página web atribuídas. Estes valores vão ser apresentados para os usuários no momento em que clicarem para logar com a conta Google. 
+    * Veja mais detalhes nesta [seção](https://developer.android.com/identity/sign-in/credential-manager-siwg#set-google) na página *developers*.
