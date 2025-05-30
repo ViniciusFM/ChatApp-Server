@@ -112,10 +112,11 @@ def google_login():
 @app.route('/channels/<string:uuid>', methods=['GET'])
 @auth_required
 def get_channel(user:User, uuid:str):
-    chn = Channel.query.filter_by(uuid=uuid).first()
-    if chn:
+    try:
+        chn = Channel.fetch(uuid)
         return jsonify(chn.toDict())
-    abort(404)
+    except APIModelException as e:
+        return jsonify({ 'errmsg': str(e) }), 404
 
 @app.route('/channels/new', methods=['POST'])
 @auth_required
@@ -123,7 +124,7 @@ def new_channel(user:User):
     chndict = request.get_json()
     if (not 'alias' in chndict):
         abort(400)
-    chn = Channel.new(chndict['alias'], user.uuid)
+    chn = Channel.new(chndict['alias'], user)
     return jsonify(chn.toDict())
 
 @app.route('/messages/new', methods=['POST'])
@@ -136,7 +137,7 @@ def new_message(user:User):
     try:
         msg = Message.new(msgdict['channel_uuid'], 
                           msgdict['text'],
-                          user.uuid)
+                          user)
     except APIModelException as e:
         return jsonify({
             'errmsg': e.message

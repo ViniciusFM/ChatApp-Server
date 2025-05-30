@@ -40,6 +40,12 @@ class User(db.Model):
     @staticmethod
     def get_user_or_none(email:str) -> 'User|None':
         return User.query.filter_by(email=email).first()
+    @staticmethod
+    def fetch(uuid:str) -> 'User':
+        usr = User.query.filter_by(uuid=uuid).first()
+        if not usr:
+            raise APIModelException('User doesn\'t exist.')
+        return usr
     def toDict(self, sensitive=False):
         ret = {
             'id'        : self.id,
@@ -61,15 +67,19 @@ class Channel(db.Model):
     messages    = db.relationship('Message', backref='channel', lazy=True)
     admin       = db.relationship('User', lazy=True, viewonly=True)
     @staticmethod
-    def new(alias:str, admin_uuid:str) -> 'Channel':
-        adm = User.query.filter_by(uuid=admin_uuid).first()
-        if not adm:
-            raise APIModelException('Admin user doesn\'t exist.')
+    def new(alias:str, admin:str|User) -> 'Channel':
+        adm = User.fetch(admin) if type(admin) == str else admin
         chn = Channel()
         chn.alias = alias
         chn.admin_id = adm.id
         db.session.add(chn)
         db.session.commit()
+        return chn
+    @staticmethod
+    def fetch(uuid:str) -> 'Channel':
+        chn = Channel.query.filter_by(uuid=uuid).first()
+        if not chn:
+            raise APIModelException('Channel doesn\'t exist.')
         return chn
     def toDict(self):
         return {
@@ -77,6 +87,7 @@ class Channel(db.Model):
             'uuid'      : self.uuid,
             'alias'     : self.alias,
             'pic_res'   : self.pic_res,
+            'admin'     : self.admin.toDict(),
             'messages'  : [msg.toDict() for msg in self.messages]
         }
 
@@ -89,13 +100,9 @@ class Message(db.Model):
     creation_ts = db.Column(db.DateTime, default=func.now())
     user        = db.relationship('User', lazy=True)
     @staticmethod
-    def new(channel_uuid:str, text:str, user_uuid:str) -> 'Message':
-        chn = Channel.query.filter_by(uuid=channel_uuid).first()
-        if not chn:
-            raise APIModelException('Channel doesn\'t exist.')
-        usr = User.query.filter_by(uuid=user_uuid).first()
-        if not usr:
-            raise APIModelException('User doesn\'t exist.')
+    def new(channel:str|Channel, text:str, user:str|User) -> 'Message':
+        chn = Channel.fetch(channel) if type(channel) == str else channel
+        usr = User.fetch(user) if type(user) == str else user
         msg = Message()
         msg.channel_id = chn.id
         msg.user_id = usr.id
