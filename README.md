@@ -2,11 +2,12 @@
 
 ## Objeto User
 
-| Atributo     | Tipo  | Descrição                       |
-|--------------|-------|---------------------------------|
-| id           | int64 | Número identificador do usuário |
-| name         |  str  | Nome do usuário                 |
-| email        |  str  | Endereço google account         |
+| Atributo     | Tipo  | Descrição                 |
+|--------------|-------|---------------------------|
+| id           | int64 | ID na base de dados       |
+| uuid         |  str  | Identificador do usuário  |
+| name         |  str  | Nome do usuário           |
+| email        |  str  | Endereço google account   |
 
 ## Objeto Channel
 
