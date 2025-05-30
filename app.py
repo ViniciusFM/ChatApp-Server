@@ -44,7 +44,6 @@ def auth_required(f):
             api_token = jwt.decode(data['token'], 
                                    app.config['SECRET_KEY'], 
                                    algorithms=['HS256'])
-            print(api_token)
             return f(user=User.get_user(api_token['email']), *args, **kwargs)
         except APIModelException as e:
             return jsonify({
