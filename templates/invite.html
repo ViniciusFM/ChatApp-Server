@@ -7,6 +7,9 @@
     <title>ChatApp | Channel invitation</title>
 </head>
 <body>
+    {% if wrong_captcha %}
+    <p class="wrong-captcha"> Wrong captcha, try again! </p>
+    {% endif %}
     {% if captcha %}
         <h1>You need to Captcha first!</h1>
         <form class="captcha-form" method="post">

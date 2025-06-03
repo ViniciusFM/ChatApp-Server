@@ -85,7 +85,7 @@ def channel_invitation(uuid):
         c_hash = request.form.get('captcha-hash')
         c_text = request.form.get('captcha-text')
         if not simple_captcha.verify(c_text, c_hash):
-            abort(403, 'Invalid captcha!')
+            return render_template('invite.html', captcha=simple_captcha.create(), wrong_captcha=True)
         try:
             chn = Channel.fetch(uuid)
             return render_template('invite.html', uuid=uuid, channel_name=chn.alias)

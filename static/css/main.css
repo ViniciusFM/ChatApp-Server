@@ -25,6 +25,15 @@ h1 {
     width: 40%;
     box-sizing: border-box;
 }
+.wrong-captcha {
+    background-color: #e05b5b;
+    color: white;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+    padding: 16px;
+    width: 100%;
+}
 
 p {
     font-size: 1.5em;
