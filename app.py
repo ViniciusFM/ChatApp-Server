@@ -31,7 +31,9 @@ def create_app():
             _app.config.update(cfgdict)
         init_model(_app)
         init_img_res()
-        _simple_captcha = CAPTCHA(config={'SECRET_CAPTCHA_KEY':_app.config['SECRET_KEY']})
+        _simple_captcha = CAPTCHA(config={
+            'SECRET_CAPTCHA_KEY':_app.config['SECRET_CAPTCHA_KEY']
+        })
         _simple_captcha.init_app(_app)
     return _app, _simple_captcha
 app, simple_captcha = create_app()
