@@ -4,12 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/css/main.css">
-    <title>ChatApp | You've been invited for a channel</title>
+    <title>ChatApp | Channel invitation</title>
 </head>
 <body>
+    {% if not_exist %}
+    
+    <h1>This channel does not exist.</h1>
+    <img class="chatapp-logo" src="/static/img/sad-pigeon.svg">
+    <p style="text-align: center;">Please consider asking for the channel's admin for a new invitation.</p>
+
+    {% else %}
+    
     <h1>You've been invited for a channel</h1>
+    <img class="chatapp-logo" src="/static/img/logo-pigeon.svg">
+    <p style="text-align: center;">Someone invited you to participate on <b>{{channel_name}}</b> channel.</p>
+    
+    {% endif %}
+
+    <footer>
+        <p>Check the ChatApp Server project at <a href="https://github.com/viniciusfm-educational/private.pdm.chatappserver">GitHub</a></p>
+    </footer>
+    
+    {% if not not_exist %}
     <script>
         window.location.href = 'chatapp://invite/{{uuid}}'
     </script>
+    {% endif %}
 </body>
 </html>

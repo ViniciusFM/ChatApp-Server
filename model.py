@@ -2,10 +2,14 @@ import uuid
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
+from res import (
+    store_pic_from_base64,
+    APIResException
+)
 
 db = SQLAlchemy()
 
-def init_db(app):
+def init_model(app):
     db.init_app(app)
     db.create_all()
 
@@ -56,16 +60,20 @@ class Channel(db.Model):
     id          = db.Column(db.Integer, primary_key=True)
     uuid        = db.Column(db.String(32), default=get_uuid, unique=True)
     alias       = db.Column(db.String(128), nullable=False)
-    pic_res     = db.Column(db.String(32), unique=True)
+    img_res     = db.Column(db.String(32), unique=True)
     admin_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     messages    = db.relationship('Message', backref='channel', lazy=True)
     admin       = db.relationship('User', lazy=True, viewonly=True)
     @staticmethod
-    def new(alias:str, admin:str|User) -> 'Channel':
+    def new(alias:str, admin:str|User, img_b64:str|None = None) -> 'Channel':
         adm = User.fetch(admin) if type(admin) == str else admin
         chn = Channel()
         chn.alias = alias
         chn.admin_id = adm.id
+        try:
+            chn.img_res = store_pic_from_base64(img_b64)
+        except APIResException as e:
+            raise APIModelException(str(e))
         db.session.add(chn)
         db.session.commit()
         return chn
@@ -80,7 +88,7 @@ class Channel(db.Model):
             'id'        : self.id,
             'uuid'      : self.uuid,
             'alias'     : self.alias,
-            'pic_res'   : self.pic_res,
+            'img_res'   : self.img_res,
             'admin'     : self.admin.toDict(),
             'messages'  : [msg.toDict() for msg in self.messages]
         }

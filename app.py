@@ -2,23 +2,23 @@ import datetime
 import fnmatch
 import json
 import jwt
-import os
 
 from flask import (
     Flask, render_template, jsonify, request,
-    abort
+    abort, send_file
 )
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from google.auth.exceptions import GoogleAuthError
 from model import (
-    Channel, Message, init_db,
+    Channel, Message, init_model,
     User, APIModelException
 )
-
-WD          = os.path.dirname(os.path.abspath(__file__))
-CONFIGFILE  = os.path.join(WD, 'config.json')
+from res import (
+    CONFIGFILE, init_img_res, 
+    get_image_path, APIResException
+)
 
 # --- app
 
@@ -28,7 +28,8 @@ def create_app():
         with open(CONFIGFILE, 'r', encoding='utf-8') as cfgfile:
             cfgdict = json.load(cfgfile)
             _app.config.update(cfgdict)
-        init_db(_app)
+        init_model(_app)
+        init_img_res()
     return _app
 app = create_app()
 
@@ -37,11 +38,12 @@ app = create_app()
 def auth_required(f):
     @wraps(f)
     def inject(*args, **kwargs):
-        data = request.get_json()
-        if 'token' not in data:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
             abort(400)
         try:
-            api_token = jwt.decode(data['token'], 
+            token = auth_header.split('Bearer ')[1]
+            api_token = jwt.decode(token, 
                                    app.config['SECRET_KEY'], 
                                    algorithms=['HS256'])
             return f(user=User.fetch(api_token['uuid']), *args, **kwargs)
@@ -74,7 +76,11 @@ def index():
 
 @app.route('/invite/<string:uuid>', methods=['GET'])
 def channel_invitation(uuid):
-    return render_template('invite.html', uuid=uuid)
+    try:
+        chn = Channel.fetch(uuid)
+        return render_template('invite.html', uuid=uuid, channel_name=chn.alias)
+    except APIModelException:
+        return render_template('invite.html', not_exist=True), 404
 
 # --- routes.auth
 
@@ -117,13 +123,26 @@ def get_channel(user:User, uuid:str):
     except APIModelException as e:
         return jsonify({ 'errmsg': str(e) }), 404
 
+@app.route('/img/<string:img_res>', methods=['GET'])
+@auth_required
+def get_img(user:User, img_res:str):
+    try:
+        return send_file(get_image_path(img_res))
+    except APIResException as e:
+        return jsonify({
+            'errmsg': str(e)
+        }), 404
+
 @app.route('/channels/new', methods=['POST'])
 @auth_required
 def new_channel(user:User):
     chndict = request.get_json()
     if (not 'alias' in chndict):
         abort(400)
-    chn = Channel.new(chndict['alias'], user)
+    chn = Channel.new(
+        chndict['alias'], user,
+        chndict['img_res'] if 'img_res' in chndict else None
+    )
     return jsonify(chn.toDict())
 
 @app.route('/messages/new', methods=['POST'])
