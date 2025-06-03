@@ -7,6 +7,7 @@ from flask import (
     Flask, render_template, jsonify, request,
     abort, send_file
 )
+from flask_simple_captcha import CAPTCHA
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -30,8 +31,10 @@ def create_app():
             _app.config.update(cfgdict)
         init_model(_app)
         init_img_res()
-    return _app
-app = create_app()
+        _simple_captcha = CAPTCHA(config={'SECRET_CAPTCHA_KEY':_app.config['SECRET_KEY']})
+        _simple_captcha.init_app(_app)
+    return _app, _simple_captcha
+app, simple_captcha = create_app()
 
 # --- utils
 
@@ -74,13 +77,20 @@ def email_allowed(email:str):
 def index():
     return render_template('index.html')
 
-@app.route('/invite/<string:uuid>', methods=['GET'])
+@app.route('/invite/<string:uuid>', methods=['GET', 'POST'])
 def channel_invitation(uuid):
-    try:
-        chn = Channel.fetch(uuid)
-        return render_template('invite.html', uuid=uuid, channel_name=chn.alias)
-    except APIModelException:
-        return render_template('invite.html', not_exist=True), 404
+    if request.method == 'GET':
+        return render_template('invite.html', captcha=simple_captcha.create())
+    if request.method == 'POST':
+        c_hash = request.form.get('captcha-hash')
+        c_text = request.form.get('captcha-text')
+        if not simple_captcha.verify(c_text, c_hash):
+            abort(403, 'Invalid captcha!')
+        try:
+            chn = Channel.fetch(uuid)
+            return render_template('invite.html', uuid=uuid, channel_name=chn.alias)
+        except APIModelException:
+            return render_template('invite.html', not_exist=True), 404
 
 # --- routes.auth
 

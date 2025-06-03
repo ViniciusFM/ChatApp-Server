@@ -7,25 +7,31 @@
     <title>ChatApp | Channel invitation</title>
 </head>
 <body>
-    {% if not_exist %}
-    
-    <h1>This channel does not exist.</h1>
-    <img class="chatapp-logo" src="/static/img/sad-pigeon.svg">
-    <p style="text-align: center;">Please consider asking for the channel's admin for a new invitation.</p>
-
+    {% if captcha %}
+        <h1>You need to Captcha first!</h1>
+        <form class="captcha-form" method="post">
+            <fieldset>
+                {{ captcha_html(captcha)|safe }}
+                <input type="submit" value="Submit" />
+            </fieldset>
+        </form>
     {% else %}
-    
-    <h1>You've been invited for a channel</h1>
-    <img class="chatapp-logo" src="/static/img/logo-pigeon.svg">
-    <p style="text-align: center;">Someone invited you to participate on <b>{{channel_name}}</b> channel.</p>
-    
+        {% if not_exist %}
+            <h1>This channel does not exist.</h1>
+            <img class="chatapp-logo" src="/static/img/sad-pigeon.svg">
+            <p style="text-align: center;">Please consider asking for the channel's admin for a new invitation.</p>
+        {% else %}
+            <h1>You've been invited for a channel</h1>
+            <img class="chatapp-logo" src="/static/img/logo-pigeon.svg">
+            <p style="text-align: center;">Someone invited you to participate on <b>{{channel_name}}</b> channel.</p>
+        {% endif %}
     {% endif %}
 
     <footer>
         <p>Check the ChatApp Server project at <a href="https://github.com/viniciusfm-educational/private.pdm.chatappserver">GitHub</a></p>
     </footer>
     
-    {% if not not_exist %}
+    {% if not captcha and not not_exist %}
     <script>
         window.location.href = 'chatapp://invite/{{uuid}}'
     </script>
