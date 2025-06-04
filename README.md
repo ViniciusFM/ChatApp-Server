@@ -1,4 +1,10 @@
-# ChatApp Server
+# ChatApp Server (see in [🇺🇸](docs/README-en_us.md))
+
+O ChatApp Server é o serviço backend que alimenta o aplicativo *mobile* ChatApp. Ele fornece uma API que gerencia funcionalidades como envio de mensagens, autenticação e canais de chat para o app.
+
+Este servidor foi desenvolvido como parte de um projeto educacional na disciplina de Programação de Dispositivos Móveis do **IFTM – Campus Uberaba Parque Tecnológico (UPT)**, ministrada por [Vinícius F. Maciel](https://github.com/ViniciusFM). Tanto o cliente *mobile* ChatApp quanto o backend ChatApp Server foram projetados para explorar práticas de desenvolvimento em tecnologias móveis e web.
+
+O servidor é distribuído sob a licença [GNU Affero General Public License (AGPLv3)](LICENSE), garantindo transparência, colaboração aberta e acesso ao código-fonte para fins de aprendizado e aprimoramento.
 
 ## Objeto User
 
@@ -35,6 +41,10 @@ As mensagens são assinadas por usuários.
 | user_id      | int64 | Número identificador do usuário que enviou a mensagem |
 | text         | str   | Texto da mensagem enviada                             |
 | creation_ts  | str   | Data de registro da mensagem                          |
+
+## Diagrama de dados
+
+<img src="docs/dados.png">
 
 ## Configurando o servidor
 
