@@ -2,6 +2,7 @@ import datetime
 import fnmatch
 import json
 import jwt
+import time
 
 from flask import (
     Flask, render_template, jsonify, request,
@@ -79,22 +80,26 @@ def inject_request():
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    return render_template('index.html', timenow=int(time.time()))
 
 @app.route('/invite/<string:uuid>', methods=['GET', 'POST'])
 def channel_invitation(uuid):
     if request.method == 'GET':
-        return render_template('invite.html', captcha=simple_captcha.create())
+        return render_template('invite.html', captcha=simple_captcha.create(), 
+                               timenow=int(time.time()))
     if request.method == 'POST':
         c_hash = request.form.get('captcha-hash')
         c_text = request.form.get('captcha-text')
         if not simple_captcha.verify(c_text, c_hash):
-            return render_template('invite.html', captcha=simple_captcha.create(), wrong_captcha=True)
+            return render_template('invite.html', captcha=simple_captcha.create(), 
+                                   wrong_captcha=True, timenow=int(time.time()))
         try:
             chn = Channel.fetch(uuid)
-            return render_template('invite.html', uuid=uuid, channel_name=chn.alias)
+            return render_template('invite.html', uuid=uuid, channel_name=chn.alias, 
+                                   timenow=int(time.time()))
         except APIModelException:
-            return render_template('invite.html', not_exist=True), 404
+            return render_template('invite.html', not_exist=True, 
+                                   timenow=int(time.time())), 404
 
 # --- routes.auth
 
