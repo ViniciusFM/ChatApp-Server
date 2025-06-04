@@ -53,9 +53,7 @@ def auth_required(f):
                                    algorithms=['HS256'])
             return f(user=User.fetch(api_token['uuid']), *args, **kwargs)
         except APIModelException as e:
-            return jsonify({
-                'errmsg': str(e)
-            }), 404
+            return jsonify({ 'errmsg': str(e) }), 404
         except (jwt.exceptions.ExpiredSignatureError,
                 jwt.exceptions.InvalidTokenError):
             return jsonify({
@@ -141,9 +139,7 @@ def get_img(user:User, img_res:str):
     try:
         return send_file(get_image_path(img_res))
     except APIResException as e:
-        return jsonify({
-            'errmsg': str(e)
-        }), 404
+        return jsonify({ 'errmsg': str(e) }), 404
 
 @app.route('/channels/new', methods=['POST'])
 @auth_required
