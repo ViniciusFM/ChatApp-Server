@@ -167,5 +167,5 @@ def new_message(user:User):
     except APIModelException as e:
         return jsonify({
             'errmsg': str(e)
-        }), 400
+        }), 404
     return jsonify(msg.toDict())

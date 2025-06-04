@@ -6,6 +6,10 @@ Este servidor foi desenvolvido como parte de um projeto educacional na disciplin
 
 O servidor é distribuído sob a licença [GNU Affero General Public License (AGPLv3)](LICENSE), garantindo transparência, colaboração aberta e acesso ao código-fonte para fins de aprendizado e aprimoramento.
 
+Veja a [Documentação da API](docs/api_docs.md) para saber mais.
+
+<img src="static/img/logo-pigeon.svg" style="display:block;width:200px;margin:16px auto;">
+
 ## Objeto User
 
 | Atributo     | Tipo  | Descrição                 |
@@ -44,7 +48,7 @@ As mensagens são assinadas por usuários.
 
 ## Diagrama de dados
 
-<img src="docs/dados.png">
+<img src="docs/diagram.png">
 
 ## Configurando o servidor
 

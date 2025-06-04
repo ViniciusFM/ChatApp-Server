@@ -6,6 +6,10 @@ This server was developed as part of an educational project in the Mobile Device
 
 The server is distributed under the [GNU Affero General Public License (AGPLv3)](../LICENSE), ensuring transparency, open collaboration, and access to the source code for learning and improvement purposes.
 
+See the [API Documentation](api_docs_en_us.md) for more information.
+
+<img src="../static/img/logo-pigeon.svg" style="display:block;width:200px;margin:16px auto;">
+
 ## User Object
 
 | Attribute | Type  | Description            |
@@ -41,7 +45,7 @@ Messages are contained within channels. Each channel has a set of messages, but 
 
 ## Data diagram
 
-<img src="dados.png">
+<img src="diagram.png">
 
 ## Setting up the server
 
