@@ -73,6 +73,10 @@ def email_allowed(email:str):
 
 # --- routes.pages
 
+@app.context_processor
+def inject_request():
+    return dict(request=request)
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
