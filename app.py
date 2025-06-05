@@ -1,9 +1,11 @@
 import datetime
+import exceptions
 import fnmatch
 import json
 import jwt
 import time
 
+from exceptions import APIModelException, jsonifyFailure
 from flask import (
     Flask, render_template, jsonify, request,
     abort, send_file
@@ -14,12 +16,11 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from google.auth.exceptions import GoogleAuthError
 from model import (
-    Channel, Message, init_model,
-    User, APIModelException
+    Channel, Message, init_model, User
 )
 from res import (
     CONFIGFILE, init_img_res, 
-    get_image_path, APIResException
+    get_image_path
 )
 
 # --- app
@@ -53,13 +54,11 @@ def auth_required(f):
                                    app.config['SECRET_KEY'], 
                                    algorithms=['HS256'])
             return f(user=User.fetch(api_token['uuid']), *args, **kwargs)
-        except APIModelException as e:
-            return jsonify({ 'errmsg': str(e) }), 404
         except (jwt.exceptions.ExpiredSignatureError,
                 jwt.exceptions.InvalidTokenError):
-            return jsonify({
-                'errmsg': 'Invalid or expired token.'
-            }), 403
+            return jsonifyFailure(exceptions.INVALID_TOKEN)
+        except APIModelException as e:
+            return e.jsonify()
     return inject
 
 def email_allowed(email:str):
@@ -114,9 +113,7 @@ def google_login():
                                             app.config['GOOGLE_CLIENT_ID'])
         email = idinfo['email']
         if not email_allowed(email):
-            return jsonify({
-                'errmsg': 'Google account not allowed.'
-            }), 403
+            return jsonifyFailure(exceptions.GOOGLE_ACC_NOT_ALLOWED)
         usr = User.get_user_or_none(email)
         if not usr:
             name = idinfo['name']
@@ -127,9 +124,7 @@ def google_login():
         }, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'user': usr.toDict(sensitive=True), 'token': api_token})
     except GoogleAuthError as e:
-        return jsonify({
-            'errmsg': f'Google account connection failure. [Err={str(e)}]'
-        }), 403
+        return jsonifyFailure(exceptions.GOOGLE_ACC_FAILED, str(e))
 
 # --- routes.api
 
@@ -140,15 +135,15 @@ def get_channel(user:User, uuid:str):
         chn = Channel.fetch(uuid)
         return jsonify(chn.toDict())
     except APIModelException as e:
-        return jsonify({ 'errmsg': str(e) }), 404
+        return e.jsonify()
 
 @app.route('/img/<string:img_res>', methods=['GET'])
 @auth_required
 def get_img(user:User, img_res:str):
     try:
         return send_file(get_image_path(img_res))
-    except APIResException as e:
-        return jsonify({ 'errmsg': str(e) }), 404
+    except APIModelException as e:
+        return e.jsonify()
 
 @app.route('/channels/new', methods=['POST'])
 @auth_required
@@ -174,7 +169,5 @@ def new_message(user:User):
                           msgdict['text'],
                           user)
     except APIModelException as e:
-        return jsonify({
-            'errmsg': str(e)
-        }), 404
+        return e.jsonify()
     return jsonify(msg.toDict())

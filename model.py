@@ -1,11 +1,10 @@
+import exceptions
 import uuid
 
+from exceptions import APIModelException
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
-from res import (
-    store_pic_from_base64,
-    APIResException
-)
+from res import store_pic_from_base64
 
 db = SQLAlchemy()
 
@@ -15,10 +14,6 @@ def init_model(app):
 
 def get_uuid() -> str:
     return uuid.uuid4().hex
-
-class APIModelException(Exception):
-    def __init__(self, msg='API Model Exception'):
-        super().__init__(msg)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -42,7 +37,7 @@ class User(db.Model):
     def fetch(uuid:str) -> 'User':
         usr = User.query.filter_by(uuid=uuid).first()
         if not usr:
-            raise APIModelException('User doesn\'t exist.')
+            raise APIModelException(exceptions.USER_NOT_FOUND)
         return usr
     def toDict(self, sensitive=False):
         ret = {
@@ -70,10 +65,7 @@ class Channel(db.Model):
         chn = Channel()
         chn.alias = alias
         chn.admin_id = adm.id
-        try:
-            chn.img_res = store_pic_from_base64(img_b64)
-        except APIResException as e:
-            raise APIModelException(str(e))
+        chn.img_res = store_pic_from_base64(img_b64)
         db.session.add(chn)
         db.session.commit()
         return chn
@@ -81,7 +73,7 @@ class Channel(db.Model):
     def fetch(uuid:str) -> 'Channel':
         chn = Channel.query.filter_by(uuid=uuid).first()
         if not chn:
-            raise APIModelException('Channel doesn\'t exist.')
+            raise APIModelException(exceptions.CHANNEL_NOT_FOUND)
         return chn
     def toDict(self):
         return {
