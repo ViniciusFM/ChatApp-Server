@@ -8,7 +8,7 @@ import time
 from exceptions import ChatApiException, jsonifyFailure
 from flask import (
     Flask, render_template, jsonify, request,
-    abort, send_file
+    abort, send_file, Response
 )
 from flask_simple_captcha import CAPTCHA
 from functools import wraps
@@ -101,6 +101,11 @@ def channel_invitation(uuid):
                                    timenow=int(time.time())), 404
 
 # --- routes.auth
+
+@app.route('/token/is_valid', methods=['GET'])
+@auth_required
+def is_token_valid(user:User):
+    return Response(status=200)
 
 @app.route('/auth/google', methods=['POST'])
 def google_login():

@@ -64,7 +64,7 @@ Rota:
 Entrada:
     JSON: id_token
 Saída:
-    JSON: token + dados completos do usuário + canais que este usuário administra
+    JSON: api token + dados completos do usuário + canais que este usuário administra
 Status de Erro:
     * 400, se id_token não estiver no corpo da requisição
     * 403, se a conta Google tiver sido restringida por este servidor.
@@ -101,6 +101,23 @@ Toda rota marcada com `auth_required` precisa conter um cabeçalho HTTP como est
 ```plain
 Cabeçalho:
     Authorization: Bearer este-deve-ser-o-token-retornado-pela-rota-de-login-do-google
+Status de Erro:
+	* 403, se token inválido ou expirado.
+	* 404, se usuário requerido não foi encontrado.
+```
+
+## Checar se API Token é Válido ([auth\_required](#requer-autenticação))
+
+Executa um teste simples sobre o *wrapping* `auth_required`.
+
+```plain
+Rota:
+	/token/is_valid
+Saída:
+	Status code 200
+Status de Erro:
+	* 403, se token inválido ou expirado.
+	* 404, se usuário requerido não foi encontrado.
 ```
 
 # Rotas da API

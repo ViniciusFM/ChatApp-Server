@@ -89,11 +89,28 @@ Error Status:
 
 ## Auth Required
 
-Every `auth_required` route needs to contain the a HTTP header like this:
+Every route marked with `auth_required` must include an HTTP header like this:
 
 ```plain
 Header:
-    Authorization: Bearer this-should-be-the-token-returned-by-google-login-route
+    Authorization: Bearer this-should-be-the-token-returned-by-the-google-login-route
+Error Status:
+	* 403, if the token is invalid or expired.
+	* 404, if the required user was not found.
+```
+
+## Check if API Token is Valid ([auth\_required](#auth-required))
+
+Performs a simple test on the *wrapping* `auth_required`.
+
+```plain
+Route:
+	/token/is_valid
+Output:
+	Status code 200
+Error Status:
+	* 403, if the token is invalid or expired.
+	* 404, if the required user was not found.
 ```
 
 # API Routes
