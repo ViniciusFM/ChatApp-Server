@@ -5,7 +5,7 @@ import json
 import jwt
 import time
 
-from exceptions import APIModelException, jsonifyFailure
+from exceptions import ChatApiException, jsonifyFailure
 from flask import (
     Flask, render_template, jsonify, request,
     abort, send_file
@@ -57,7 +57,7 @@ def auth_required(f):
         except (jwt.exceptions.ExpiredSignatureError,
                 jwt.exceptions.InvalidTokenError):
             return jsonifyFailure(exceptions.INVALID_TOKEN)
-        except APIModelException as e:
+        except ChatApiException as e:
             return e.jsonify()
     return inject
 
@@ -96,7 +96,7 @@ def channel_invitation(uuid):
             chn = Channel.fetch(uuid)
             return render_template('invite.html', uuid=uuid, channel_name=chn.alias, 
                                    timenow=int(time.time()))
-        except APIModelException:
+        except ChatApiException:
             return render_template('invite.html', not_exist=True, 
                                    timenow=int(time.time())), 404
 
@@ -134,7 +134,7 @@ def get_channel(user:User, uuid:str):
     try:
         chn = Channel.fetch(uuid)
         return jsonify(chn.toDict())
-    except APIModelException as e:
+    except ChatApiException as e:
         return e.jsonify()
 
 @app.route('/img/<string:img_res>', methods=['GET'])
@@ -142,7 +142,7 @@ def get_channel(user:User, uuid:str):
 def get_img(user:User, img_res:str):
     try:
         return send_file(get_image_path(img_res))
-    except APIModelException as e:
+    except ChatApiException as e:
         return e.jsonify()
 
 @app.route('/channels/new', methods=['POST'])
@@ -168,6 +168,6 @@ def new_message(user:User):
         msg = Message.new(msgdict['channel_uuid'], 
                           msgdict['text'],
                           user)
-    except APIModelException as e:
+    except ChatApiException as e:
         return e.jsonify()
     return jsonify(msg.toDict())

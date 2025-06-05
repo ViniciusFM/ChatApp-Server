@@ -1,7 +1,7 @@
 import exceptions
 import uuid
 
-from exceptions import APIModelException
+from exceptions import ChatApiException
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from res import store_pic_from_base64
@@ -37,7 +37,7 @@ class User(db.Model):
     def fetch(uuid:str) -> 'User':
         usr = User.query.filter_by(uuid=uuid).first()
         if not usr:
-            raise APIModelException(exceptions.USER_NOT_FOUND)
+            raise ChatApiException(exceptions.USER_NOT_FOUND)
         return usr
     def toDict(self, sensitive=False):
         ret = {
@@ -73,7 +73,7 @@ class Channel(db.Model):
     def fetch(uuid:str) -> 'Channel':
         chn = Channel.query.filter_by(uuid=uuid).first()
         if not chn:
-            raise APIModelException(exceptions.CHANNEL_NOT_FOUND)
+            raise ChatApiException(exceptions.CHANNEL_NOT_FOUND)
         return chn
     def toDict(self):
         return {

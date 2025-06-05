@@ -1,6 +1,6 @@
 from flask import jsonify, Response
 
-API_MODEL_EXCP              = ('API Model Exception', 0, 400)
+CHAT_API_EXCP               = ('Chat API Exception', 0, 400)
 USER_NOT_FOUND              = ('User doesn\'t exist.', 1, 404)
 CHANNEL_NOT_FOUND           = ('Channel doesn\'t exist.', 2, 404)
 INVALID_IMG_RESOLUTION      = ('Invalid image resolution.', 3, 406)
@@ -19,8 +19,8 @@ def jsonifyFailure(excp:tuple, extra:str=None) -> Response:
     }
     return jsonify(ret), excp[2]
 
-class APIModelException(Exception):
-    def __init__(self, excp:tuple=API_MODEL_EXCP, extra:str=None):
+class ChatApiException(Exception):
+    def __init__(self, excp:tuple=CHAT_API_EXCP, extra:str=None):
         super().__init__(excp[0])
         self.excp = excp
         self.extra = extra

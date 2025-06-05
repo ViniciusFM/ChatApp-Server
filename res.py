@@ -5,7 +5,7 @@ import os
 import PIL
 import uuid
 
-from exceptions import APIModelException
+from exceptions import ChatApiException
 from io import BytesIO
 from PIL import Image
 
@@ -21,7 +21,7 @@ def init_img_res():
 def store_pic_from_base64(pic_b64:str|None) -> str|None:
     '''
         Returns the picture uuid resource or None if pic_b64 = None.
-        Raises APIModelException
+        Raises ChatApiException
     '''
     if not pic_b64:
         return None
@@ -32,17 +32,17 @@ def store_pic_from_base64(pic_b64:str|None) -> str|None:
         if(im.height <= _MAX_H and im.width <= _MAX_W):
             im.save(fpath, 'JPEG')
         else:
-            raise APIModelException(
+            raise ChatApiException(
                 exceptions.INVALID_IMG_RESOLUTION,
                 extra=f'max: {_MAX_W}x{_MAX_H} pixels'
             )
     except binascii.Error as e:
-        raise APIModelException(
+        raise ChatApiException(
             exceptions.INVALID_B64_FORMAT,
             extra=str(e)
         )
     except (FileNotFoundError, PIL.UnidentifiedImageError) as e:
-        raise APIModelException(
+        raise ChatApiException(
             exceptions.UNKNOW_IMG_CRETION_PROBLEM,
             extra=str(e)
         )
@@ -51,10 +51,10 @@ def store_pic_from_base64(pic_b64:str|None) -> str|None:
 def get_image_path(resuuid:str) -> str|None:
     '''
         Returns path.
-        raises APIModelException
+        raises ChatApiException
     '''
     path = os.path.join(IMG_RES, f'{resuuid}.jpg')
     if os.path.exists(path):
         return path
     else:
-        raise APIModelException(exceptions.IMG_NOT_FOUND)
+        raise ChatApiException(exceptions.IMG_NOT_FOUND)
