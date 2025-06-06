@@ -3,6 +3,7 @@
     "SECRET_KEY": "python -c 'import secrets; print(secrets.token_hex(32))'",
     "SECRET_CAPTCHA_KEY": "python -c 'import secrets; print(secrets.token_hex(32))'",
     "GOOGLE_CLIENT_ID": "edit-here-to-insert-google-client",
+    "TOKEN_EXP_DHM": [1, 0, 0],
     "RESTRICT_TO": [
         "*regexmatch.com.br",
         "specific@gmail.com"

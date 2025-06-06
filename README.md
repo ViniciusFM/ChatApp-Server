@@ -85,6 +85,7 @@ pip install -r requirements.txt
     * Repita o mesmo passo anterior para criar um valor para `SECRET_CAPTCHA_KEY`, para uso do captcha.
     * Copie o valor gerado para o arquivo de configuração.
     * No *array* `RESTRICT_TO` adicione regras (*regex*) e/ou endereços específicos de e-mail para restringir o acesso ao serviço. Se você deletar a regra ou deixar o *array* vazio, o acesso será irrestrito a qualquer conta Google.
+    * No *array* `TOKEN_EXP_DHM` adicione a duração de cada API Token, em termos de dias, horas e minutos. Por exemplo, o *array* `[1, 2, 3]` corresponderia a um limite de `1 dia, 2 horas e 3 minutos`.
     * Complete o arquivo de configuração com o ID da aplicação de autenticação criada no Google Cloud Console. Para saber como realizar esse passo vá para o tutorial [docs/google_auth_config.md](docs/google_auth_config.md)
 7) Executar a aplicação flask localmente:
 ```bash

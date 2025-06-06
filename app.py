@@ -123,9 +123,11 @@ def google_login():
         if not usr:
             name = idinfo['name']
             usr = User.new(name, email)
+        tdelta = app.config['TOKEN_EXP_DHM']
         api_token = jwt.encode({
             'uuid': usr.uuid,
-            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
+            'exp': datetime.datetime.now(datetime.timezone.utc) + \
+                    datetime.timedelta(days=tdelta[0], hours=tdelta[1], minutes=tdelta[2])
         }, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'user': usr.toDict(sensitive=True), 'token': api_token})
     except GoogleAuthError as e:
